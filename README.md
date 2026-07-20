@@ -59,7 +59,7 @@ The supported credential is the calling workflow's `${{ github.token }}`. PATs a
 
 ## Daily profile update
 
-Put the following workflow in the profile repository, for example `shinpr/shinpr/.github/workflows/profile-stats.yml`. Replace `REPLACE_WITH_V0_1_0_RELEASE_SHA` with the full commit SHA for the published `v0.1.0` release. The external Actions are already pinned to their current full release SHAs.
+Put the following workflow in the profile repository, for example `shinpr/shinpr/.github/workflows/profile-stats.yml`. All Actions are pinned to full release commit SHAs.
 
 ```yaml
 name: Update profile stats
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: shinpr/github-profile-stats@REPLACE_WITH_V0_1_0_RELEASE_SHA # v0.1.0
+      - uses: shinpr/github-profile-stats@d4fc303c8ccf3510e7daf799c79136dfe35529f0 # v0.1.0
         id: stats
         with:
           username: shinpr
