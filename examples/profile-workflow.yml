@@ -1,0 +1,45 @@
+name: Update profile stats
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-profile-stats
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: shinpr/github-profile-stats@REPLACE_WITH_V0_1_0_RELEASE_SHA # v0.1.0
+        id: stats
+        with:
+          username: shinpr
+          token: ${{ github.token }}
+          theme: signal-field
+      - name: Stage complete artifact set
+        env:
+          READY_DIR: ${{ steps.stats.outputs.ready-dir }}
+        run: |
+          mkdir -p profile
+          cp "$READY_DIR"/signal-field-*.svg profile/
+          test -s profile/signal-field-wide-light.svg
+          test -s profile/signal-field-wide-dark.svg
+          test -s profile/signal-field-compact-light.svg
+          test -s profile/signal-field-compact-dark.svg
+          git add profile/signal-field-*.svg
+      - name: Publish changed artifact set
+        run: |
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "Update profile stats"
+          git push

@@ -1,0 +1,22 @@
+{
+  "name": "github-profile-stats",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generate a bounded GitHub profile statistics graphic.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test test/**/*.test.mjs",
+    "test:coverage": "node --test --experimental-test-coverage test/**/*.test.mjs",
+    "check": "npm test && npm pack --dry-run --cache ./node_modules/.cache/npm"
+  },
+  "files": [
+    "action.yml",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT"
+}

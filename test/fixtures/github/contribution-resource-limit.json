@@ -1,0 +1,32 @@
+{
+  "evidenceVersion": 1,
+  "capturedOn": "2026-07-20",
+  "viewerLogin": "shinpr",
+  "variables": {
+    "login": "shinpr",
+    "from": "2025-07-22T00:00:00Z",
+    "to": "2026-07-20T23:59:59Z"
+  },
+  "response": {
+    "data": {
+      "viewer": {
+        "login": "shinpr"
+      },
+      "user": null,
+      "rateLimit": {
+        "cost": 1
+      }
+    },
+    "errors": [
+      {
+        "type": "RESOURCE_LIMITS_EXCEEDED",
+        "path": [
+          "user",
+          "contributionsCollection",
+          "restrictedContributionsCount"
+        ],
+        "message": "Resource limits for this query exceeded."
+      }
+    ]
+  }
+}

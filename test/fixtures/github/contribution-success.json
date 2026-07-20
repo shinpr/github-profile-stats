@@ -1,0 +1,45 @@
+{
+  "data": {
+    "viewer": {
+      "login": "shinpr"
+    },
+    "user": {
+      "contributionsCollection": {
+        "hasAnyRestrictedContributions": true,
+        "restrictedContributionsCount": 30,
+        "contributionCalendar": {
+          "totalContributions": 102,
+          "weeks": [
+            {
+              "contributionDays": [
+                {
+                  "date": "2026-07-17",
+                  "contributionCount": 14
+                },
+                {
+                  "date": "2026-07-18",
+                  "contributionCount": 26
+                }
+              ]
+            },
+            {
+              "contributionDays": [
+                {
+                  "date": "2026-07-19",
+                  "contributionCount": 26
+                },
+                {
+                  "date": "2026-07-20",
+                  "contributionCount": 36
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "rateLimit": {
+      "cost": 1
+    }
+  }
+}

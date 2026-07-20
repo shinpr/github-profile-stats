@@ -1,0 +1,10 @@
+.DS_Store
+/node_modules/
+/coverage/
+/tmp/
+/*.tgz
+/docs/
+/.claude/
+/.codex/
+/AGENTS.md
+/CLAUDE.md
