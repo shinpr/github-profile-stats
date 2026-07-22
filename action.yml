@@ -1,5 +1,5 @@
 name: GitHub Profile Stats
-description: Generate wide and compact Signal Field profile graphics.
+description: Generate validated static GitHub profile graphics.
 inputs:
   username:
     description: GitHub login to summarize.
@@ -7,13 +7,13 @@ inputs:
   token:
     description: Workflow-provided github.token.
     required: true
-  theme:
-    description: Registered visual theme. Every theme emits wide/compact in light/dark.
+  profile:
+    description: Registered visual profile and its required metrics.
     required: false
     default: signal-field
 outputs:
   ready-dir:
-    description: Absolute path containing the complete validated four-SVG set.
+    description: Absolute path containing the complete validated artifact set.
 runs:
   using: node24
   main: src/action.mjs

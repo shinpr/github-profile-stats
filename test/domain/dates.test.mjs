@@ -48,6 +48,9 @@ test('should partition an inclusive range without gaps or overlap', () => {
       { fromDate: '2026-07-20', toDate: '2026-07-20' },
     ],
   );
+});
+
+test('should reject a non-positive partition size', () => {
   assert.throws(
     () => partitionDateRange({ fromDate: '2026-07-20', toDate: '2026-07-20', maximumDays: 0 }),
     /maximumDays must be a positive integer/,

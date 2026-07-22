@@ -17,7 +17,7 @@ test('should map Action inputs to generation and emit ready-dir', async (context
     env: {
       INPUT_USERNAME: ' shinpr ',
       INPUT_TOKEN: 'secret-token',
-      INPUT_THEME: ' signal-field ',
+      INPUT_PROFILE: ' activity-consistency ',
       RUNNER_TEMP: tempRoot,
       GITHUB_OUTPUT: outputPath,
     },
@@ -30,14 +30,14 @@ test('should map Action inputs to generation and emit ready-dir', async (context
   assert.deepEqual(generationInput, {
     username: 'shinpr',
     token: 'secret-token',
-    theme: 'signal-field',
+    profile: 'activity-consistency',
     tempRoot,
   });
   assert.equal(await readFile(outputPath, 'utf8'), `ready-dir=${join(tempRoot, 'ready')}\n`);
 });
 
-test('should default to the Signal Field visual theme', async (context) => {
-  const tempRoot = await mkdtemp(join(tmpdir(), 'profile-stats-action-theme-'));
+test('should default to the Signal Field profile', async (context) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'profile-stats-action-profile-'));
   context.after(() => rm(tempRoot, { recursive: true, force: true }));
   const outputPath = join(tempRoot, 'output.txt');
   await writeFile(outputPath, '');
@@ -56,7 +56,8 @@ test('should default to the Signal Field visual theme', async (context) => {
     },
   });
 
-  assert.equal(generationInput.theme, 'signal-field');
+  assert.equal(generationInput.profile, 'signal-field');
+  assert.equal(Object.hasOwn(generationInput, 'theme'), false);
 });
 
 test('should reject a missing token before generation', async () => {
