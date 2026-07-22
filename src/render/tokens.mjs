@@ -27,6 +27,48 @@ export const COLOR_SCHEME_TOKENS = Object.freeze({
   }),
 });
 
+function freezeFormatTokens(tokens) {
+  if (tokens.levels) Object.freeze(tokens.levels);
+  if (tokens.ranks) Object.freeze(tokens.ranks);
+  return Object.freeze(tokens);
+}
+
+export const ACTIVITY_FORMAT_TOKENS = Object.freeze({
+  light: freezeFormatTokens({
+    surface: '#FCFAF5',
+    primaryText: '#17171B',
+    mutedText: '#5E5B63',
+    line: '#D8D2C7',
+    accent: '#C54B32',
+    levels: ['#E7E1D7', '#C27F5D', '#B96B45', '#A64E2E', '#7F2F22'],
+  }),
+  dark: freezeFormatTokens({
+    surface: '#151821',
+    primaryText: '#F7F3EA',
+    mutedText: '#AAA8B4',
+    line: '#303543',
+    accent: '#F08A5B',
+    levels: ['#262A35', '#A85D42', '#C56D47', '#DF8050', '#F59B69'],
+  }),
+});
+
+export const LANGUAGE_FORMAT_TOKENS = Object.freeze({
+  light: freezeFormatTokens({
+    surface: '#FCFAF5',
+    primaryText: '#17171B',
+    mutedText: '#5E5B63',
+    line: '#D8D2C7',
+    ranks: ['#59622D', '#606933', '#687038', '#70783E', '#788044'],
+  }),
+  dark: freezeFormatTokens({
+    surface: '#151821',
+    primaryText: '#F7F3EA',
+    mutedText: '#AAA8B4',
+    line: '#303543',
+    ranks: ['#BAC37C', '#A9B16D', '#98A05F', '#879052', '#778045'],
+  }),
+});
+
 function relativeLuminance(hex) {
   const channels = hex.slice(1).match(/.{2}/g).map((channel) => Number.parseInt(channel, 16) / 255);
   const linear = channels.map((channel) => (

@@ -2,22 +2,19 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { isAbsolute, join } from 'node:path';
 
-const VARIANTS = Object.freeze(['compact-dark', 'compact-light', 'wide-dark', 'wide-light']);
 const ARTIFACT_NAME_PATTERN = /^([a-z0-9]+(?:-[a-z0-9]+)*)-(compact|wide)-(dark|light)\.svg$/;
 
-function validateArtifacts(artifacts) {
+function validateArtifacts(artifacts, expectedNames) {
   if (!artifacts || typeof artifacts !== 'object') throw new TypeError('artifacts are required');
+  if (!Array.isArray(expectedNames) || expectedNames.length === 0
+    || new Set(expectedNames).size !== expectedNames.length
+    || expectedNames.some((name) => !ARTIFACT_NAME_PATTERN.test(name))) {
+    throw new TypeError('expectedNames must be a non-empty unique artifact-name array');
+  }
   const names = Object.keys(artifacts).sort();
-  const firstMatch = names[0]?.match(ARTIFACT_NAME_PATTERN);
-  const visualTheme = firstMatch?.[1];
-  const expectedNames = visualTheme
-    ? VARIANTS.map((variant) => `${visualTheme}-${variant}.svg`)
-    : [];
-  if (names.length !== expectedNames.length
-    || names.some((name, index) => name !== expectedNames[index])) {
-    throw new TypeError(
-      'artifacts must contain exactly one visual theme with compact-dark, compact-light, wide-dark, wide-light variants',
-    );
+  const expected = [...expectedNames].sort();
+  if (names.length !== expected.length || names.some((name, index) => name !== expected[index])) {
+    throw new TypeError('artifact names must exactly match expectedNames');
   }
   for (const name of names) {
     if (typeof artifacts[name] !== 'string') throw new TypeError(`${name} must be a string`);
@@ -27,11 +24,12 @@ function validateArtifacts(artifacts) {
 
 export async function writeReadyDirectory({
   artifacts,
+  expectedNames,
   tempRoot,
   directoryName = `github-profile-stats-${randomUUID()}`,
   fileSystem = { mkdir, readdir, writeFile },
 }) {
-  const filenames = validateArtifacts(artifacts);
+  const filenames = validateArtifacts(artifacts, expectedNames);
   if (typeof tempRoot !== 'string' || !isAbsolute(tempRoot)) {
     throw new TypeError('tempRoot must be an absolute path');
   }

@@ -18,8 +18,8 @@ export async function runAction({
   const token = requiredValue(env, 'INPUT_TOKEN', 'token');
   const tempRoot = requiredValue(env, 'RUNNER_TEMP', 'runner_temp');
   const outputPath = requiredValue(env, 'GITHUB_OUTPUT', 'github_output');
-  const theme = env.INPUT_THEME?.trim() || 'signal-field';
-  const result = await generate({ username, token, theme, tempRoot });
+  const profile = env.INPUT_PROFILE?.trim() || 'signal-field';
+  const result = await generate({ username, token, profile, tempRoot });
   if (result.readyDir.includes('\n') || result.readyDir.includes('\r')) {
     throw new TypeError('ready-dir contains a newline');
   }

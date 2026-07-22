@@ -1,4 +1,6 @@
 import { COLOR_SCHEME_TOKENS } from './tokens.mjs';
+import { svgSequentialLegend } from './card-primitives.mjs';
+import { positionCalendarDays, splitCalendarBands } from './calendar-grid.mjs';
 
 const SANS_FONT = 'ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
 const MONO_FONT = 'ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace';
@@ -67,23 +69,22 @@ function renderFrame({ layout, theme, content }) {
   ].join('');
 }
 
-function renderLegend({ x, y, theme, moreX }) {
-  const marks = theme.activity.map((color, index) => (
-    `<rect x="${x + 11 + index * 11}" y="${y - 7}" width="7" height="7" rx="2" fill="${color}"/>`
-  )).join('');
-  return [
-    text({ x, y, value: 'LESS', fill: theme.secondaryText, size: 9, anchor: 'end' }),
-    marks,
-    text({ x: moreX, y, value: 'MORE', fill: theme.secondaryText, size: 9, anchor: 'end' }),
-  ].join('');
+function renderLegend({ marksX, y, theme, markSize }) {
+  return svgSequentialLegend({
+    colors: theme.activity,
+    marksX,
+    baselineY: y,
+    markSize,
+    fill: theme.secondaryText,
+    textSize: 9,
+    textWeight: 500,
+  });
 }
 
 function renderActivityCells({ activity, x, y, size, step, theme, band }) {
-  const firstDay = new Date(`${activity[0].date}T00:00:00Z`).getUTCDay();
-  return activity.map((day, index) => {
-    const position = firstDay + index;
-    const cellX = x + Math.floor(position / 7) * step;
-    const cellY = y + (position % 7) * step;
+  return positionCalendarDays(activity).map(({ day, column, row }) => {
+    const cellX = x + column * step;
+    const cellY = y + row * step;
     const bandAttribute = band ? ` data-band="${band}"` : '';
     return `<rect x="${cellX}" y="${cellY}" width="${size}" height="${size}" rx="2" fill="${theme.activity[day.level]}" data-date="${day.date}" data-count="${day.count}" data-level="${day.level}"${bandAttribute}/>`;
   }).join('');
@@ -109,7 +110,7 @@ function renderWide(snapshot, theme) {
     renderWideMetric({ x: 390, value: snapshot.metrics.authoredPullRequests.value, label: 'PULL REQUESTS', theme }),
     renderWideMetric({ x: 496, value: snapshot.metrics.authoredIssues.value, label: 'ISSUES', theme }),
     text({ x: 30, y: 179, value: 'DAILY ACTIVITY · PAST YEAR', fill: theme.primaryText, size: 12, weight: 550 }),
-    renderLegend({ x: 506, y: 179, theme, moreX: 610 }),
+    renderLegend({ marksX: 517, y: 179, theme, markSize: 9 }),
     renderActivityCells({ activity: snapshot.activity, x: 30, y: 199, size: 9, step: 11, theme }),
     `<path d="M30 288h580" stroke="${theme.hairline}"/>`,
     text({ x: 30, y: 330, value: 'SOURCE · GITHUB GRAPHQL CONTRIBUTION CALENDAR', fill: theme.secondaryText, size: 10 }),
@@ -134,18 +135,9 @@ function renderCompactBand({ activity, y, theme, band }) {
   ].join('');
 }
 
-function compactSplitIndex(activity) {
-  const midpoint = Math.ceil(activity.length / 2);
-  const midpointEnd = new Date(`${activity[midpoint - 1].date}T00:00:00Z`).getUTCDay();
-  const daysUntilSaturday = (6 - midpointEnd + 7) % 7;
-  return midpoint + daysUntilSaturday;
-}
-
 function renderCompact(snapshot, theme) {
   const contributions = snapshot.metrics.contributionsPastYear.value;
-  const splitIndex = compactSplitIndex(snapshot.activity);
-  const firstBand = snapshot.activity.slice(0, splitIndex);
-  const secondBand = snapshot.activity.slice(splitIndex);
+  const [firstBand, secondBand] = splitCalendarBands(snapshot.activity);
   const content = [
     text({ x: 22, y: 27, value: formatCompactLogin(snapshot.account.login), fill: theme.primaryText, size: 13, weight: 800 }),
     text({ x: 298, y: 27, value: 'GITHUB ACTIVITY', fill: theme.secondaryText, size: 9, weight: 650, anchor: 'end' }),
@@ -159,7 +151,7 @@ function renderCompact(snapshot, theme) {
     renderCompactMetric({ x: 160, value: snapshot.metrics.authoredPullRequests.value, label: 'PULL REQUESTS', theme }),
     renderCompactMetric({ x: 254, value: snapshot.metrics.authoredIssues.value, label: 'ISSUES', theme }),
     text({ x: 22, y: 267, value: 'DAILY ACTIVITY', fill: theme.primaryText, size: 11, weight: 650 }),
-    renderLegend({ x: 207, y: 267, theme, moreX: 298 }),
+    renderLegend({ marksX: 218, y: 267, theme, markSize: 8 }),
     renderCompactBand({ activity: firstBand, y: 291, theme, band: 1 }),
     renderCompactBand({ activity: secondBand, y: 397, theme, band: 2 }),
     `<path d="M22 493h276" stroke="${theme.hairline}"/>`,
@@ -172,18 +164,34 @@ export function renderSignalField({ snapshot, colorScheme, layout = 'wide' }) {
   const theme = COLOR_SCHEME_TOKENS[colorScheme];
   if (!theme) throw new TypeError(`unsupported color scheme: ${colorScheme}`);
   if (!GEOMETRY[layout]) throw new TypeError(`unsupported layout: ${layout}`);
-  if (snapshot?.schemaVersion !== 1 || snapshot.activity?.length !== snapshot.period?.days
-    || ![365, 366].includes(snapshot.period.days)) {
-    throw new TypeError('renderer requires a valid StatsSnapshotV1');
+  const contributions = snapshot?.datasets?.contributions;
+  const totalStars = snapshot?.datasets?.totalStars;
+  const authoredPullRequests = snapshot?.datasets?.authoredPullRequests;
+  const authoredIssues = snapshot?.datasets?.authoredIssues;
+  if (contributions?.daily?.length !== contributions?.period?.days
+    || ![365, 366].includes(contributions?.period?.days)
+    || !totalStars || !authoredPullRequests || !authoredIssues) {
+    throw new TypeError('renderer requires the Signal Field datasets');
   }
-  const contributions = snapshot.metrics.contributionsPastYear.value;
-  const description = `${NUMBER_FORMAT.format(contributions)} contributions in the past year; ${NUMBER_FORMAT.format(snapshot.metrics.totalStars.value)} stars; ${NUMBER_FORMAT.format(snapshot.metrics.authoredPullRequests.value)} authored public pull requests reported by GitHub REST Search; ${NUMBER_FORMAT.format(snapshot.metrics.authoredIssues.value)} authored public issues reported by GitHub REST Search. ${snapshot.period.days} daily activity marks from ${snapshot.period.fromDate} through ${snapshot.period.toDate}, inclusive.`;
+  const view = {
+    account: snapshot.account,
+    period: contributions.period,
+    metrics: {
+      contributionsPastYear: { value: contributions.totalContributions },
+      totalStars,
+      authoredPullRequests,
+      authoredIssues,
+    },
+    activity: contributions.daily,
+  };
+  const contributionTotal = contributions.totalContributions;
+  const description = `${NUMBER_FORMAT.format(contributionTotal)} contributions in the past year; ${NUMBER_FORMAT.format(totalStars.value)} stars; ${NUMBER_FORMAT.format(authoredPullRequests.value)} authored public pull requests reported by GitHub REST Search; ${NUMBER_FORMAT.format(authoredIssues.value)} authored public issues reported by GitHub REST Search. ${contributions.period.days} daily activity marks from ${contributions.period.fromDate} through ${contributions.period.toDate}, inclusive.`;
   const geometry = GEOMETRY[layout];
-  const body = layout === 'wide' ? renderWide(snapshot, theme) : renderCompact(snapshot, theme);
+  const body = layout === 'wide' ? renderWide(view, theme) : renderCompact(view, theme);
   const titleId = `title-${layout}-${colorScheme}`;
   const descriptionId = `desc-${layout}-${colorScheme}`;
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${geometry.width} ${geometry.height}" width="${geometry.width}" height="${geometry.height}" data-period-days="${snapshot.period.days}" role="img" aria-labelledby="${titleId} ${descriptionId}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${geometry.width} ${geometry.height}" width="${geometry.width}" height="${geometry.height}" data-period-days="${contributions.period.days}" role="img" aria-labelledby="${titleId} ${descriptionId}">`,
     `<title id="${titleId}">${escapeXml(snapshot.account.login)} GitHub activity summary · ${layout}</title>`,
     `<desc id="${descriptionId}">${escapeXml(description)}</desc>`,
     body,

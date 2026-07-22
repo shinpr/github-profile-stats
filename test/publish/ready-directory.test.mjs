@@ -21,6 +21,7 @@ test('should expose a directory only after all four exact artifacts are written'
 
   const result = await writeReadyDirectory({
     artifacts: ARTIFACTS,
+    expectedNames: FILENAMES,
     tempRoot,
   });
 
@@ -29,24 +30,6 @@ test('should expose a directory only after all four exact artifacts are written'
     await readFile(join(result.readyDir, 'signal-field-wide-light.svg'), 'utf8'),
     '<svg id="wide-light"/>',
   );
-});
-
-test('should accept one complete four-variant set for another visual theme', async (context) => {
-  const tempRoot = await mkdtemp(join(tmpdir(), 'profile-stats-ready-theme-'));
-  context.after(() => rm(tempRoot, { recursive: true, force: true }));
-  const artifacts = Object.fromEntries(Object.entries(ARTIFACTS).map(([name, svg]) => [
-    name.replace('signal-field', 'quiet-grid'),
-    svg,
-  ]));
-
-  const result = await writeReadyDirectory({ artifacts, tempRoot });
-
-  assert.deepEqual(await readdir(result.readyDir), [
-    'quiet-grid-compact-dark.svg',
-    'quiet-grid-compact-light.svg',
-    'quiet-grid-wide-dark.svg',
-    'quiet-grid-wide-light.svg',
-  ]);
 });
 
 test('should reject without returning a ready directory when a write fails', async (context) => {
@@ -66,6 +49,7 @@ test('should reject without returning a ready directory when a write fails', asy
   await assert.rejects(
     writeReadyDirectory({
       artifacts: ARTIFACTS,
+      expectedNames: FILENAMES,
       tempRoot,
       fileSystem,
       directoryName: 'fixed',
@@ -81,9 +65,10 @@ test('should reject an extra artifact name', async () => {
         ...ARTIFACTS,
         'manifest.json': '{}',
       },
+      expectedNames: FILENAMES,
       tempRoot: '/tmp/unused',
     }),
-    /exactly one visual theme with compact-dark, compact-light, wide-dark, wide-light variants/,
+    /artifact names must exactly match expectedNames/,
   );
 });
 
@@ -99,6 +84,7 @@ test('should reject when final directory validation observes an extra file', asy
   await assert.rejects(
     writeReadyDirectory({
       artifacts: ARTIFACTS,
+      expectedNames: FILENAMES,
       tempRoot,
       fileSystem,
       directoryName: 'fixed',

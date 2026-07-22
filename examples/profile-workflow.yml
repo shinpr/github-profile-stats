@@ -20,9 +20,9 @@ jobs:
       - uses: shinpr/github-profile-stats@d4fc303c8ccf3510e7daf799c79136dfe35529f0 # v0.1.0
         id: stats
         with:
-          username: shinpr
+          username: ${{ github.repository_owner }}
           token: ${{ github.token }}
-          theme: signal-field
+          profile: signal-field
       - name: Stage complete artifact set
         env:
           READY_DIR: ${{ steps.stats.outputs.ready-dir }}

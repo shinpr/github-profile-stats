@@ -1,4 +1,9 @@
-import { COLOR_SCHEME_TOKENS, contrastRatio } from './tokens.mjs';
+import {
+  ACTIVITY_FORMAT_TOKENS,
+  COLOR_SCHEME_TOKENS,
+  LANGUAGE_FORMAT_TOKENS,
+  contrastRatio,
+} from './tokens.mjs';
 
 const MAX_SVG_BYTES = 150 * 1024;
 const PROHIBITED_CONTENT = /<(?:script|foreignObject|iframe|object|embed)\b|\son[a-z]+\s*=/i;
@@ -30,7 +35,7 @@ function validateAccessibleMetadata(svg) {
   }
 }
 
-export function validateSvg({ svg, colorScheme, layout }) {
+export function validateSvg({ svg, layout }) {
   if (typeof svg !== 'string') throw new TypeError('svg must be a string');
   const bytes = Buffer.byteLength(svg, 'utf8');
   if (bytes > MAX_SVG_BYTES) throw new RangeError(`SVG exceeds ${MAX_SVG_BYTES} bytes`);
@@ -42,12 +47,64 @@ export function validateSvg({ svg, colorScheme, layout }) {
   validateAccessibleMetadata(svg);
   if (PROHIBITED_CONTENT.test(svg)) throw new TypeError('prohibited SVG content');
   if (EXTERNAL_REFERENCE.test(svg)) throw new TypeError('SVG contains an external reference');
+  if (!svg.endsWith('</svg>\n')) throw new TypeError('SVG must be a complete UTF-8 document');
+  return Object.freeze({ bytes });
+}
+
+export function validateSignalFieldSvg({ svg, colorScheme }) {
+  if (typeof svg !== 'string') throw new TypeError('svg must be a string');
   const declaredDays = Number(svg.match(/\bdata-period-days="(365|366)"/)?.[1]);
   const activityDates = svg.match(/data-date="\d{4}-\d{2}-\d{2}"/g) ?? [];
   if (!declaredDays || activityDates.length !== declaredDays) {
     throw new TypeError('SVG activity dates must match the declared period');
   }
-  if (!svg.endsWith('</svg>\n')) throw new TypeError('SVG must be a complete UTF-8 document');
   validateContrast(colorScheme);
-  return Object.freeze({ bytes });
+  return Object.freeze({ activityDates: activityDates.length });
+}
+
+export function validateActivityConsistencySvg({ svg, colorScheme }) {
+  if (typeof svg !== 'string' || !/\bdata-format="activity-consistency"/.test(svg)) {
+    throw new TypeError('activity consistency SVG requires its format marker');
+  }
+  const declaredDays = Number(svg.match(/\bdata-period-days="(365|366)"/)?.[1]);
+  const activityDates = svg.match(/data-date="\d{4}-\d{2}-\d{2}"/g) ?? [];
+  const dailyMarks = [...svg.matchAll(/<rect\b(?=[^>]*\bdata-date=)[^>]*\bwidth="([^"]+)"[^>]*\bheight="([^"]+)"[^>]*>/g)];
+  if (!declaredDays || activityDates.length !== declaredDays) {
+    throw new TypeError('activity consistency dates must match the declared period');
+  }
+  if (dailyMarks.length !== declaredDays
+    || dailyMarks.some(([, width, height]) => Number(width) !== Number(height))) {
+    throw new TypeError('activity consistency daily marks must be squares');
+  }
+  const tokens = ACTIVITY_FORMAT_TOKENS[colorScheme];
+  if (!tokens) throw new TypeError(`unsupported color scheme: ${colorScheme}`);
+  if (contrastRatio(tokens.primaryText, tokens.surface) < 4.5
+    || contrastRatio(tokens.mutedText, tokens.surface) < 4.5
+    || tokens.levels.slice(1).some((color) => contrastRatio(color, tokens.surface) < 3)) {
+    throw new TypeError(`${colorScheme} activity tokens violate the contrast contract`);
+  }
+  return Object.freeze({ activityDates: activityDates.length });
+}
+
+export function validateLanguageCompositionSvg({ svg, colorScheme }) {
+  if (typeof svg !== 'string' || !/\bdata-format="language-composition"/.test(svg)) {
+    throw new TypeError('language composition SVG requires its format marker');
+  }
+  const declaredGroups = Number(svg.match(/\bdata-language-groups="([0-5])"/)?.[1]);
+  const totalBytes = Number(svg.match(/\bdata-total-bytes="(\d+)"/)?.[1]);
+  const railMarks = svg.match(/\bdata-rail-rank="[1-5]"/g) ?? [];
+  const rowMarks = svg.match(/\bdata-row-rank="[1-5]"/g) ?? [];
+  if (!Number.isSafeInteger(totalBytes) || declaredGroups !== railMarks.length
+    || declaredGroups !== rowMarks.length
+    || (totalBytes === 0) !== (declaredGroups === 0)) {
+    throw new TypeError('language composition groups must match complete or empty semantics');
+  }
+  const tokens = LANGUAGE_FORMAT_TOKENS[colorScheme];
+  if (!tokens) throw new TypeError(`unsupported color scheme: ${colorScheme}`);
+  if (contrastRatio(tokens.primaryText, tokens.surface) < 4.5
+    || contrastRatio(tokens.mutedText, tokens.surface) < 4.5
+    || tokens.ranks.some((color) => contrastRatio(color, tokens.surface) < 3)) {
+    throw new TypeError(`${colorScheme} language tokens violate the contrast contract`);
+  }
+  return Object.freeze({ groups: declaredGroups });
 }
