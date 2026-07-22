@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: shinpr/github-profile-stats@d4fc303c8ccf3510e7daf799c79136dfe35529f0 # v0.1.0
+      - uses: shinpr/github-profile-stats@49b5f7091182a45f3ef93923505b660c6da5f835 # v0.2.0
         id: stats
         with:
           username: ${{ github.repository_owner }}
