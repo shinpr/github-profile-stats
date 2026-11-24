@@ -39,8 +39,10 @@ function renderRows({ groups, tokens, x, width, startY, gap, barHeight, labelSiz
         family: SANS_FONT,
         anchor: 'end',
       }),
+      `<g><title>${escapeXml(`${group.name} ${group.exactPercentageLabel}`)}</title>`,
       `<rect x="${x}" y="${y + 10}" width="${width}" height="${barHeight}" fill="${tokens.line}"/>`,
       `<rect data-row-rank="${index + 1}" x="${x}" y="${y + 10}" width="${width * group.bytes / groups.reduce((sum, item) => sum + item.bytes, 0)}" height="${barHeight}" fill="${tokens.ranks[index]}"/>`,
+      '</g>',
     ].join('');
   }).join('');
 }

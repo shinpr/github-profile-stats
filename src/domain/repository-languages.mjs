@@ -91,14 +91,29 @@ export function buildLanguageDisplayGroups(dataset) {
   return deepFreeze(allocations.map(({ name, bytes, percentage }) => ({
     name,
     bytes,
-    percentageLabel: describePercentage(percentage, hasSeveralGroups),
+    percentageLabel: describeShare(percentage, 0, hasSeveralGroups),
+    exactPercentageLabel: describeShare(
+      roundedShare(bytes, groupedTotal, EXACT_PERCENTAGE_DECIMALS),
+      EXACT_PERCENTAGE_DECIMALS,
+      hasSeveralGroups,
+    ),
   })));
 }
 
-// Every group has bytes, so a rounded 0% would deny code that exists, and a rounded
-// 100% beside another group would deny that group's code.
-function describePercentage(percentage, hasSeveralGroups) {
-  if (percentage === 0) return '<1%';
-  if (percentage === 100 && hasSeveralGroups) return '>99%';
-  return `${percentage}%`;
+const EXACT_PERCENTAGE_DECIMALS = 2;
+
+// Share of total in units of 10^-decimals percent, rounded half up.
+function roundedShare(bytes, total, decimals) {
+  const scaled = BigInt(bytes) * 100n * 10n ** BigInt(decimals) * 2n + BigInt(total);
+  return Number(scaled / (2n * BigInt(total)));
+}
+
+// Every group has bytes, so a share rounded to 0 would deny code that exists, and a
+// share rounded to 100% beside another group would deny that group's code.
+function describeShare(units, decimals, hasSeveralGroups) {
+  const unitsPerPercent = 10 ** decimals;
+  const format = (value) => `${(value / unitsPerPercent).toFixed(decimals)}%`;
+  if (units === 0) return `<${format(1)}`;
+  if (units === 100 * unitsPerPercent && hasSeveralGroups) return `>${format(units - 1)}`;
+  return format(units);
 }
