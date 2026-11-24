@@ -175,3 +175,9 @@ npm run check
 ~~~
 
 The project has no runtime or development package dependencies.
+
+To look at the cards in `assets/` in a browser, start the preview server and open the address it prints:
+
+~~~sh
+npm run preview -- --port 4173
+~~~

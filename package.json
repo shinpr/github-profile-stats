@@ -10,7 +10,8 @@
   "scripts": {
     "test": "node --test test/**/*.test.mjs",
     "test:coverage": "node --test --experimental-test-coverage test/**/*.test.mjs",
-    "check": "npm test && npm pack --dry-run --cache ./node_modules/.cache/npm"
+    "check": "npm test && npm pack --dry-run --cache ./node_modules/.cache/npm",
+    "preview": "node scripts/preview.mjs"
   },
   "files": [
     "action.yml",
