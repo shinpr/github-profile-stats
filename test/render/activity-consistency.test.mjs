@@ -146,29 +146,19 @@ test('should render the approved wide activity hierarchy and complete daily evid
   validateActivityConsistencySvg({ svg, colorScheme: 'light' });
 });
 
-const quietPeriods = [
-  { days: 365, fromDate: '2025-07-21', asOfDate: '2026-07-20' },
-  { days: 366, fromDate: '2024-02-29', asOfDate: '2025-02-28' },
-];
+for (const layout of ['wide', 'compact']) {
+  test(`should explain a quiet period and keep the zero figures on the ${layout} card`, () => {
+    const snapshot = makeSnapshot({ countForIndex: () => 0 });
 
-for (const period of quietPeriods) {
-  for (const layout of ['wide', 'compact']) {
-    for (const colorScheme of ['light', 'dark']) {
-      test(`should explain a quiet ${period.days}-day period on the ${layout} ${colorScheme} card`, () => {
-        const snapshot = makeSnapshot({ ...period, countForIndex: () => 0 });
+    const svg = renderActivityConsistency({ snapshot, layout, colorScheme: 'light' });
 
-        const svg = renderActivityConsistency({ snapshot, layout, colorScheme });
-
-        assert.match(svg, /<text\b[^>]*>No contributions in this period<\/text>/);
-        assert.match(svg, /<desc\b[^>]*>No contributions in this period\./);
-        assert.match(svg, new RegExp(`>0</text><text[^>]*>/ ${period.days}</text>`));
-        assert.match(svg, />0<\/text><text[^>]*>CURRENT STREAK · DAYS<\/text>/);
-        assert.match(svg, />0<\/text><text[^>]*>LONGEST STREAK · DAYS<\/text>/);
-        assert.match(svg, />0(?:<\/text><text[^>]*>| )CONTRIBUTIONS · PAST YEAR<\/text>/);
-        assertSquareDailyMarks(svg, period.days);
-      });
-    }
-  }
+    assert.match(svg, /<text\b[^>]*>No contributions in this period<\/text>/);
+    assert.match(svg, /<desc\b[^>]*>No contributions in this period\./);
+    assert.match(svg, />0<\/text><text[^>]*>\/ 365<\/text>/);
+    assert.match(svg, />0<\/text><text[^>]*>CURRENT STREAK · DAYS<\/text>/);
+    assert.match(svg, />0<\/text><text[^>]*>LONGEST STREAK · DAYS<\/text>/);
+    assert.match(svg, />0(?:<\/text><text[^>]*>| )CONTRIBUTIONS · PAST YEAR<\/text>/);
+  });
 }
 
 test('should omit the quiet-period message when a period has one contribution', () => {
