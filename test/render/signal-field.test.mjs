@@ -11,9 +11,12 @@ import { COLOR_SCHEME_TOKENS, contrastRatio } from '../../src/render/tokens.mjs'
 import { validateSignalFieldSvg, validateSvg } from '../../src/render/validate-svg.mjs';
 import { makeCollectorResults } from '../helpers/fixtures.mjs';
 
-function makeSnapshot({ username = 'shinpr', leap = false } = {}) {
+function makeSnapshot({
+  username = 'shinpr',
+  leap = false,
+  collected = makeCollectorResults(leap ? { fromDate: '2024-02-29', days: 366 } : {}),
+} = {}) {
   const asOfDate = leap ? '2025-02-28' : '2026-07-20';
-  const collected = makeCollectorResults(leap ? { fromDate: '2024-02-29', days: 366 } : {});
   const datasets = {
     contributions: normalizeContributionsDataset({ asOfDate, contributions: collected.contributions }),
     totalStars: normalizeScalarDataset({ id: 'totalStars', value: collected.totalStars }),
@@ -27,6 +30,42 @@ function makeSnapshot({ username = 'shinpr', leap = false } = {}) {
     asOfDate,
     datasets,
     requiredDatasetIds: Object.keys(datasets),
+  });
+}
+
+for (const { layout, colorScheme, contributionTotal, totalStars, authoredPullRequests, authoredIssues, expected } of [
+  {
+    layout: 'wide',
+    colorScheme: 'light',
+    contributionTotal: 1,
+    totalStars: 0,
+    authoredPullRequests: 1,
+    authoredIssues: 2,
+    expected: '1 contribution in the past year; 0 stars; 1 authored public pull request reported by GitHub REST Search; 2 authored public issues reported by GitHub REST Search.',
+  },
+  {
+    layout: 'compact',
+    colorScheme: 'dark',
+    contributionTotal: 0,
+    totalStars: 1,
+    authoredPullRequests: 1196,
+    authoredIssues: 1,
+    expected: '0 contributions in the past year; 1 star; 1,196 authored public pull requests reported by GitHub REST Search; 1 authored public issue reported by GitHub REST Search.',
+  },
+]) {
+  test(`should use singular nouns only for counts of one in the ${layout} description`, () => {
+    const collected = {
+      ...makeCollectorResults({ countForIndex: (index) => (index === 0 ? contributionTotal : 0) }),
+      totalStars,
+      authoredPullRequests,
+      authoredIssues,
+    };
+    const snapshot = makeSnapshot({ collected });
+
+    const svg = renderSignalField({ snapshot, layout, colorScheme });
+
+    const description = svg.match(/<desc id="[^"]+">([^<]+)<\/desc>/)?.[1];
+    assert.equal(description?.slice(0, expected.length), expected);
   });
 }
 

@@ -1,6 +1,10 @@
 export const SANS_FONT = 'ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
 export const MONO_FONT = 'ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace';
 
+export function unit(count, singular, plural) {
+  return count === 1 ? singular : plural;
+}
+
 export function escapeXml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
