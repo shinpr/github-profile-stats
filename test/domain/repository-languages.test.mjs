@@ -50,11 +50,11 @@ test('should form top four plus Other and allocate whole percentages by largest 
     ],
   });
   assert.deepEqual(view, [
-    { name: 'A', bytes: 3, percentage: 23 },
-    { name: 'B', bytes: 3, percentage: 23 },
-    { name: 'C', bytes: 2, percentage: 16 },
-    { name: 'D', bytes: 2, percentage: 15 },
-    { name: 'Other', bytes: 3, percentage: 23 },
+    { name: 'A', bytes: 3, percentageLabel: '23%' },
+    { name: 'B', bytes: 3, percentageLabel: '23%' },
+    { name: 'C', bytes: 2, percentageLabel: '16%' },
+    { name: 'D', bytes: 2, percentageLabel: '15%' },
+    { name: 'Other', bytes: 3, percentageLabel: '23%' },
   ]);
 });
 
@@ -62,7 +62,35 @@ test('should display fewer than four languages without an Other group', () => {
   assert.deepEqual(buildLanguageDisplayGroups({
     totalBytes: 4,
     languages: [{ name: 'Go', bytes: 4 }],
-  }), [{ name: 'Go', bytes: 4, percentage: 100 }]);
+  }), [{ name: 'Go', bytes: 4, percentageLabel: '100%' }]);
+});
+
+test('should label a share that rounds to zero as under one percent', () => {
+  assert.deepEqual(buildLanguageDisplayGroups({
+    totalBytes: 1000,
+    languages: [
+      { name: 'TypeScript', bytes: 500 },
+      { name: 'Go', bytes: 496 },
+      { name: 'Shell', bytes: 4 },
+    ],
+  }), [
+    { name: 'TypeScript', bytes: 500, percentageLabel: '50%' },
+    { name: 'Go', bytes: 496, percentageLabel: '50%' },
+    { name: 'Shell', bytes: 4, percentageLabel: '<1%' },
+  ]);
+});
+
+test('should label a share that rounds to all beside another language as over ninety-nine percent', () => {
+  assert.deepEqual(buildLanguageDisplayGroups({
+    totalBytes: 1000,
+    languages: [
+      { name: 'TypeScript', bytes: 997 },
+      { name: 'Shell', bytes: 3 },
+    ],
+  }), [
+    { name: 'TypeScript', bytes: 997, percentageLabel: '>99%' },
+    { name: 'Shell', bytes: 3, percentageLabel: '<1%' },
+  ]);
 });
 
 test('should reject display groups whose bytes do not equal the declared total', () => {

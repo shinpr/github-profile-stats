@@ -87,5 +87,18 @@ export function buildLanguageDisplayGroups(dataset) {
     return left.remainder > right.remainder ? -1 : 1;
   });
   for (let index = 0; index < points; index += 1) byRemainder[index].percentage += 1;
-  return deepFreeze(allocations.map(({ name, bytes, percentage }) => ({ name, bytes, percentage })));
+  const hasSeveralGroups = allocations.length > 1;
+  return deepFreeze(allocations.map(({ name, bytes, percentage }) => ({
+    name,
+    bytes,
+    percentageLabel: describePercentage(percentage, hasSeveralGroups),
+  })));
+}
+
+// Every group has bytes, so a rounded 0% would deny code that exists, and a rounded
+// 100% beside another group would deny that group's code.
+function describePercentage(percentage, hasSeveralGroups) {
+  if (percentage === 0) return '<1%';
+  if (percentage === 100 && hasSeveralGroups) return '>99%';
+  return `${percentage}%`;
 }
