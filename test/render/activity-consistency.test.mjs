@@ -146,10 +146,34 @@ test('should render the approved wide activity hierarchy and complete daily evid
   validateActivityConsistencySvg({ svg, colorScheme: 'light' });
 });
 
+for (const layout of ['wide', 'compact']) {
+  test(`should explain a quiet period and keep the zero figures on the ${layout} card`, () => {
+    const snapshot = makeSnapshot({ countForIndex: () => 0 });
+
+    const svg = renderActivityConsistency({ snapshot, layout, colorScheme: 'light' });
+
+    assert.match(svg, /<text\b[^>]*>No contributions in this period<\/text>/);
+    assert.match(svg, /<desc\b[^>]*>No contributions in this period\. 0 active days out of 365; 0-day current streak; 0-day longest streak; 0 contributions\./);
+    assert.match(svg, />0<\/text><text[^>]*>\/ 365<\/text>/);
+    assert.match(svg, />0<\/text><text[^>]*>CURRENT STREAK · DAYS<\/text>/);
+    assert.match(svg, />0<\/text><text[^>]*>LONGEST STREAK · DAYS<\/text>/);
+    assert.match(svg, />0(?:<\/text><text[^>]*>| )CONTRIBUTIONS · PAST YEAR<\/text>/);
+  });
+}
+
+test('should omit the quiet-period message when a period has one contribution', () => {
+  const snapshot = makeSnapshot({ countForIndex: (index) => (index === 364 ? 1 : 0) });
+
+  for (const layout of ['wide', 'compact']) {
+    const svg = renderActivityConsistency({ snapshot, layout, colorScheme: 'light' });
+
+    assert.doesNotMatch(svg, /No contributions in this period/);
+  }
+});
+
 for (const { count, expectedDescription } of [
   { count: 1, expectedDescription: /^1 active day out of 365;.*; 1 contribution\./ },
   { count: 7, expectedDescription: /^1 active day out of 365;.*; 7 contributions\./ },
-  { count: 0, expectedDescription: /^0 active days out of 365;.*; 0 contributions\./ },
 ]) {
   test(`should describe a final-day contribution count of ${count}`, () => {
     const svg = renderActivityConsistency({

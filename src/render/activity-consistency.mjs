@@ -79,7 +79,7 @@ function renderDailyField({
   return { svg, bottom };
 }
 
-function renderWide({ snapshot, contributions, tokens }) {
+function renderWide({ snapshot, contributions, tokens, quietPeriodMessage }) {
   const activeSize = contributions.activeDays >= 100 ? 78 : 86;
   const ratioX = contributions.activeDays >= 100 ? 182 : 88;
   const cellSize = 9;
@@ -101,6 +101,7 @@ function renderWide({ snapshot, contributions, tokens }) {
     svgText({ x: 320, y: 126, value: `CURRENT STREAK · ${unit(contributions.currentStreak, 'DAY', 'DAYS')}`, fill: tokens.mutedText, size: 8, weight: 650 }),
     svgText({ x: 490, y: 105, value: contributions.longestStreak, fill: tokens.primaryText, size: 43, weight: 700, family: SANS_FONT }),
     svgText({ x: 490, y: 126, value: `LONGEST STREAK · ${unit(contributions.longestStreak, 'DAY', 'DAYS')}`, fill: tokens.mutedText, size: 8, weight: 650 }),
+    quietPeriodMessage && svgText({ x: 30, y: 153, value: quietPeriodMessage, fill: tokens.primaryText, size: 11, weight: 700 }),
     svgText({ x: 30, y: 176, value: `${NUMBER_FORMAT.format(contributions.totalContributions)} ${unit(contributions.totalContributions, 'CONTRIBUTION', 'CONTRIBUTIONS')} · PAST YEAR`, fill: tokens.primaryText, size: 11, weight: 700 }),
     svgText({ x: 610, y: 176, value: `${contributions.period.days} UTC DAYS · WARMTH IS AMOUNT`, fill: tokens.mutedText, size: 8, weight: 650, anchor: 'end' }),
     field.svg,
@@ -115,9 +116,10 @@ function renderWide({ snapshot, contributions, tokens }) {
   ].join('');
 }
 
-function renderCompact({ snapshot, contributions, tokens }) {
+function renderCompact({ snapshot, contributions, tokens, quietPeriodMessage }) {
   const activeSize = contributions.activeDays >= 100 ? 68 : 74;
   const ratioX = contributions.activeDays >= 100 ? 170 : 72;
+  const totalBaselineY = 264;
   const cellSize = 8;
   const field = renderDailyField({
     daily: contributions.daily,
@@ -137,8 +139,9 @@ function renderCompact({ snapshot, contributions, tokens }) {
     svgText({ x: 20, y: 222, value: `CURRENT STREAK · ${unit(contributions.currentStreak, 'DAY', 'DAYS')}`, fill: tokens.mutedText, size: 8, weight: 650 }),
     svgText({ x: 182, y: 202, value: contributions.longestStreak, fill: tokens.primaryText, size: 42, weight: 700, family: SANS_FONT }),
     svgText({ x: 182, y: 222, value: `LONGEST STREAK · ${unit(contributions.longestStreak, 'DAY', 'DAYS')}`, fill: tokens.mutedText, size: 8, weight: 650 }),
-    svgText({ x: 20, y: 264, value: NUMBER_FORMAT.format(contributions.totalContributions), fill: tokens.primaryText, size: 28, weight: 680, family: SANS_FONT }),
+    svgText({ x: 20, y: totalBaselineY, value: NUMBER_FORMAT.format(contributions.totalContributions), fill: tokens.primaryText, size: 28, weight: 680, family: SANS_FONT }),
     svgText({ x: 20, y: 286, value: `${unit(contributions.totalContributions, 'CONTRIBUTION', 'CONTRIBUTIONS')} · PAST YEAR`, fill: tokens.mutedText, size: 8, weight: 650 }),
+    quietPeriodMessage && svgText({ x: 55, y: totalBaselineY, value: quietPeriodMessage, fill: tokens.primaryText, size: 11, weight: 700 }),
     svgText({ x: 20, y: 312, value: `${contributions.period.days} UTC DAYS · WARMTH IS AMOUNT`, fill: tokens.mutedText, size: 8, weight: 650 }),
     field.svg,
     renderLegend({
@@ -159,10 +162,11 @@ export function renderActivityConsistency({ snapshot, colorScheme, layout = 'wid
   if (!contributions || contributions.period?.toDate !== snapshot.asOfDate) {
     throw new TypeError('renderer requires the contributions dataset');
   }
-  const body = layout === 'wide'
-    ? renderWide({ snapshot, contributions, tokens })
-    : renderCompact({ snapshot, contributions, tokens });
   const { activeDays, currentStreak, longestStreak, period, totalContributions } = contributions;
+  const quietPeriodMessage = totalContributions === 0
+    ? 'No contributions in this period'
+    : '';
+  const renderBody = layout === 'wide' ? renderWide : renderCompact;
   const description = [
     `${activeDays} ${unit(activeDays, 'active day', 'active days')} out of ${period.days};`,
     `${currentStreak}-day current streak; ${longestStreak}-day longest streak;`,
@@ -175,8 +179,8 @@ export function renderActivityConsistency({ snapshot, colorScheme, layout = 'wid
     format: 'activity-consistency',
     tokens,
     title: `${snapshot.account.login} activity consistency · ${layout}`,
-    description,
-    body,
+    description: quietPeriodMessage ? `${quietPeriodMessage}. ${description}` : description,
+    body: renderBody({ snapshot, contributions, tokens, quietPeriodMessage }),
     metadata: ` data-period-days="${contributions.period.days}"`,
   });
 }
