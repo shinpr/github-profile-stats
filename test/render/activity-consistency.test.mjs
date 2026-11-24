@@ -146,6 +146,23 @@ test('should render the approved wide activity hierarchy and complete daily evid
   validateActivityConsistencySvg({ svg, colorScheme: 'light' });
 });
 
+for (const { count, expectedDescription } of [
+  { count: 1, expectedDescription: /^1 active day out of 365;.*; 1 contribution\./ },
+  { count: 7, expectedDescription: /^1 active day out of 365;.*; 7 contributions\./ },
+  { count: 0, expectedDescription: /^0 active days out of 365;.*; 0 contributions\./ },
+]) {
+  test(`should describe a final-day contribution count of ${count}`, () => {
+    const svg = renderActivityConsistency({
+      snapshot: makeSnapshot({ countForIndex: (index) => (index === 364 ? count : 0) }),
+      layout: 'wide',
+      colorScheme: 'light',
+    });
+
+    const description = svg.match(/<desc\b[^>]*>([^<]*)<\/desc>/)?.[1] ?? '';
+    assert.match(description, expectedDescription);
+  });
+}
+
 test('should keep compact one-day and full-year values inside the same geometry', () => {
   const sparse = renderActivityConsistency({
     snapshot: makeSnapshot({ countForIndex: (index) => (index === 364 ? 7 : 0) }),

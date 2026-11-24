@@ -165,7 +165,13 @@ export function renderActivityConsistency({ snapshot, colorScheme, layout = 'wid
   const body = layout === 'wide'
     ? renderWide({ snapshot, contributions, tokens })
     : renderCompact({ snapshot, contributions, tokens });
-  const description = `${contributions.activeDays} active days out of ${contributions.period.days}; ${contributions.currentStreak}-day current streak; ${contributions.longestStreak}-day longest streak; ${NUMBER_FORMAT.format(contributions.totalContributions)} contributions. Each daily mark represents one UTC day and warmth represents contribution amount.`;
+  const { activeDays, currentStreak, longestStreak, period, totalContributions } = contributions;
+  const description = [
+    `${activeDays} ${unit(activeDays, 'active day', 'active days')} out of ${period.days};`,
+    `${currentStreak}-day current streak; ${longestStreak}-day longest streak;`,
+    `${NUMBER_FORMAT.format(totalContributions)} ${unit(totalContributions, 'contribution', 'contributions')}.`,
+    'Each daily mark represents one UTC day and warmth represents contribution amount.',
+  ].join(' ');
   return svgFrame({
     layout,
     colorScheme,
