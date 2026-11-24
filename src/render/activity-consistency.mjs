@@ -14,6 +14,7 @@ import {
 const NUMBER_FORMAT = new Intl.NumberFormat('en-US');
 const MONTHS = Object.freeze(['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']);
 const FIELD_TO_LEGEND_GAP = 16;
+const QUIET_PERIOD_MESSAGE = 'No contributions in this period';
 
 function formatDate(date) {
   const [year, month, day] = date.split('-').map(Number);
@@ -165,6 +166,11 @@ export function renderActivityConsistency({ snapshot, colorScheme, layout = 'wid
   const body = layout === 'wide'
     ? renderWide({ snapshot, contributions, tokens })
     : renderCompact({ snapshot, contributions, tokens });
+  const isQuietPeriod = contributions.totalContributions === 0;
+  const messagePosition = layout === 'wide' ? { x: 30, y: 153 } : { x: 55, y: 264 };
+  const quietPeriodText = isQuietPeriod
+    ? svgText({ ...messagePosition, value: QUIET_PERIOD_MESSAGE, fill: tokens.primaryText, size: 11, weight: 700 })
+    : '';
   const description = `${contributions.activeDays} active days out of ${contributions.period.days}; ${contributions.currentStreak}-day current streak; ${contributions.longestStreak}-day longest streak; ${NUMBER_FORMAT.format(contributions.totalContributions)} contributions. Each daily mark represents one UTC day and warmth represents contribution amount.`;
   return svgFrame({
     layout,
@@ -172,8 +178,8 @@ export function renderActivityConsistency({ snapshot, colorScheme, layout = 'wid
     format: 'activity-consistency',
     tokens,
     title: `${snapshot.account.login} activity consistency · ${layout}`,
-    description,
-    body,
+    description: isQuietPeriod ? `${QUIET_PERIOD_MESSAGE}. ${description}` : description,
+    body: body + quietPeriodText,
     metadata: ` data-period-days="${contributions.period.days}"`,
   });
 }
