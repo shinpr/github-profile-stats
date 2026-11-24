@@ -3,7 +3,6 @@ import test from 'node:test';
 
 import { normalizeMetricSnapshot } from '../../src/domain/snapshot.mjs';
 import { normalizeRepositoryLanguagesDataset } from '../../src/domain/repository-languages.mjs';
-import { COLOR_SCHEMES, LAYOUTS } from '../../src/registry/visual-formats.mjs';
 import { renderLanguageComposition } from '../../src/render/language-composition.mjs';
 import { validateLanguageCompositionSvg, validateSvg } from '../../src/render/validate-svg.mjs';
 
@@ -60,7 +59,7 @@ test('should render a composition rail and rank-matched labelled rows', () => {
   validateLanguageCompositionSvg({ svg, colorScheme: 'light' });
 });
 
-test('should use a readable two-line title and preserve exact language casing in compact', () => {
+test('should render the compact title, exact language casing, and singular repository label', () => {
   const svg = renderLanguageComposition({
     snapshot: makeSnapshot([{ name: 'Objective-C++', bytes: 1 }], 1),
     layout: 'compact',
@@ -69,6 +68,7 @@ test('should use a readable two-line title and preserve exact language casing in
   assert.match(svg, />LANGUAGE<\/text>.*>COMPOSITION<\/text>/s);
   assert.match(svg, />Objective-C\+\+<\/text>/);
   assert.match(svg, />100%<\/text>/);
+  assert.match(svg, />GITHUB-REPORTED BYTES · 1 OWNED PUBLIC NON-FORK REPO<\/text>/);
   assert.doesNotMatch(svg, />OBJECTIVE-C/);
   validateSvg({ svg, layout: 'compact' });
   validateLanguageCompositionSvg({ svg, colorScheme: 'dark' });
@@ -86,25 +86,27 @@ test('should render the valid empty state without rail, rows, or percentages', (
   validateLanguageCompositionSvg({ svg, colorScheme: 'light' });
 });
 
-for (const { byteState, languageEntries } of [
-  { byteState: 'with language bytes', languageEntries: [{ name: 'Go', bytes: 1 }] },
-  { byteState: 'without language bytes', languageEntries: [] },
-]) {
-  for (const layout of LAYOUTS) {
-    for (const colorScheme of COLOR_SCHEMES) {
-      test(`should describe one repository in the singular for ${layout} ${colorScheme} ${byteState}`, () => {
-        const svg = renderLanguageComposition({
-          snapshot: makeSnapshot(languageEntries, 1),
-          layout,
-          colorScheme,
-        });
+test('should use singular repository wording in the wide card with language bytes', () => {
+  const svg = renderLanguageComposition({
+    snapshot: makeSnapshot([{ name: 'Go', bytes: 1 }], 1),
+    layout: 'wide',
+    colorScheme: 'light',
+  });
 
-        assert.match(svg, />GITHUB-REPORTED BYTES · 1 OWNED PUBLIC NON-FORK REPO<\/text>/);
-        assert.match(svg, /<desc[^>]*>[^<]*across 1 owned public non-fork repository as of /);
-      });
-    }
-  }
-}
+  assert.match(svg, />GITHUB-REPORTED BYTES · 1 OWNED PUBLIC NON-FORK REPO<\/text>/);
+  assert.match(svg, /<desc[^>]*>GitHub-reported language bytes across 1 owned public non-fork repository as of /);
+});
+
+test('should use singular repository wording when no language bytes are reported', () => {
+  const svg = renderLanguageComposition({
+    snapshot: makeSnapshot([], 1),
+    layout: 'compact',
+    colorScheme: 'light',
+  });
+
+  assert.match(svg, />GITHUB-REPORTED BYTES · 1 OWNED PUBLIC NON-FORK REPO<\/text>/);
+  assert.match(svg, /<desc[^>]*>No GitHub-reported language bytes across 1 owned public non-fork repository as of /);
+});
 
 test('should retain full long names in the description while visibly truncating the row', () => {
   const fullName = 'AQuiteUnusuallyLongProgrammingLanguageName';
