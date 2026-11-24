@@ -5,6 +5,7 @@ import {
   svgFrame,
   svgSequentialLegend,
   svgText,
+  unit,
 } from './card-primitives.mjs';
 import {
   positionCalendarDays,
@@ -76,10 +77,6 @@ function renderDailyField({
   const bandCount = bands.length;
   const bottom = y + bandCount * bandHeight + (bandCount - 1) * bandGap;
   return { svg, bottom };
-}
-
-function unit(value, singular, plural) {
-  return value === 1 ? singular : plural;
 }
 
 function renderWide({ snapshot, contributions, tokens, quietPeriodMessage }) {
@@ -165,11 +162,17 @@ export function renderActivityConsistency({ snapshot, colorScheme, layout = 'wid
   if (!contributions || contributions.period?.toDate !== snapshot.asOfDate) {
     throw new TypeError('renderer requires the contributions dataset');
   }
-  const quietPeriodMessage = contributions.totalContributions === 0
+  const { activeDays, currentStreak, longestStreak, period, totalContributions } = contributions;
+  const quietPeriodMessage = totalContributions === 0
     ? 'No contributions in this period'
     : '';
   const renderBody = layout === 'wide' ? renderWide : renderCompact;
-  const description = `${contributions.activeDays} active days out of ${contributions.period.days}; ${contributions.currentStreak}-day current streak; ${contributions.longestStreak}-day longest streak; ${NUMBER_FORMAT.format(contributions.totalContributions)} contributions. Each daily mark represents one UTC day and warmth represents contribution amount.`;
+  const description = [
+    `${activeDays} ${unit(activeDays, 'active day', 'active days')} out of ${period.days};`,
+    `${currentStreak}-day current streak; ${longestStreak}-day longest streak;`,
+    `${NUMBER_FORMAT.format(totalContributions)} ${unit(totalContributions, 'contribution', 'contributions')}.`,
+    'Each daily mark represents one UTC day and warmth represents contribution amount.',
+  ].join(' ');
   return svgFrame({
     layout,
     colorScheme,

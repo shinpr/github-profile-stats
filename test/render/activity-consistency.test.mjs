@@ -153,7 +153,7 @@ for (const layout of ['wide', 'compact']) {
     const svg = renderActivityConsistency({ snapshot, layout, colorScheme: 'light' });
 
     assert.match(svg, /<text\b[^>]*>No contributions in this period<\/text>/);
-    assert.match(svg, /<desc\b[^>]*>No contributions in this period\./);
+    assert.match(svg, /<desc\b[^>]*>No contributions in this period\. 0 active days out of 365; 0-day current streak; 0-day longest streak; 0 contributions\./);
     assert.match(svg, />0<\/text><text[^>]*>\/ 365<\/text>/);
     assert.match(svg, />0<\/text><text[^>]*>CURRENT STREAK · DAYS<\/text>/);
     assert.match(svg, />0<\/text><text[^>]*>LONGEST STREAK · DAYS<\/text>/);
@@ -170,6 +170,22 @@ test('should omit the quiet-period message when a period has one contribution', 
     assert.doesNotMatch(svg, /No contributions in this period/);
   }
 });
+
+for (const { count, expectedDescription } of [
+  { count: 1, expectedDescription: /^1 active day out of 365;.*; 1 contribution\./ },
+  { count: 7, expectedDescription: /^1 active day out of 365;.*; 7 contributions\./ },
+]) {
+  test(`should describe a final-day contribution count of ${count}`, () => {
+    const svg = renderActivityConsistency({
+      snapshot: makeSnapshot({ countForIndex: (index) => (index === 364 ? count : 0) }),
+      layout: 'wide',
+      colorScheme: 'light',
+    });
+
+    const description = svg.match(/<desc\b[^>]*>([^<]*)<\/desc>/)?.[1] ?? '';
+    assert.match(description, expectedDescription);
+  });
+}
 
 test('should keep compact one-day and full-year values inside the same geometry', () => {
   const sparse = renderActivityConsistency({

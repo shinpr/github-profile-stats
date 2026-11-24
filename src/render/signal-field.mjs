@@ -1,5 +1,5 @@
 import { COLOR_SCHEME_TOKENS } from './tokens.mjs';
-import { svgSequentialLegend } from './card-primitives.mjs';
+import { svgSequentialLegend, unit } from './card-primitives.mjs';
 import { positionCalendarDays, splitCalendarBands } from './calendar-grid.mjs';
 
 const SANS_FONT = 'ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
@@ -43,6 +43,10 @@ function formatBandDate(date) {
 function formatCompactLogin(login) {
   if (login.length <= COMPACT_LOGIN_CHARACTERS) return login;
   return `${login.slice(0, COMPACT_LOGIN_CHARACTERS - 1)}…`;
+}
+
+function formatCount(value, singular, plural) {
+  return `${NUMBER_FORMAT.format(value)} ${unit(value, singular, plural)}`;
 }
 
 function text({ x, y, value, fill, size, weight = 500, family = MONO_FONT, anchor }) {
@@ -184,8 +188,13 @@ export function renderSignalField({ snapshot, colorScheme, layout = 'wide' }) {
     },
     activity: contributions.daily,
   };
-  const contributionTotal = contributions.totalContributions;
-  const description = `${NUMBER_FORMAT.format(contributionTotal)} contributions in the past year; ${NUMBER_FORMAT.format(totalStars.value)} stars; ${NUMBER_FORMAT.format(authoredPullRequests.value)} authored public pull requests reported by GitHub REST Search; ${NUMBER_FORMAT.format(authoredIssues.value)} authored public issues reported by GitHub REST Search. ${contributions.period.days} daily activity marks from ${contributions.period.fromDate} through ${contributions.period.toDate}, inclusive.`;
+  const description = [
+    `${formatCount(contributions.totalContributions, 'contribution', 'contributions')} in the past year;`,
+    `${formatCount(totalStars.value, 'star', 'stars')};`,
+    `${formatCount(authoredPullRequests.value, 'authored public pull request', 'authored public pull requests')} reported by GitHub REST Search;`,
+    `${formatCount(authoredIssues.value, 'authored public issue', 'authored public issues')} reported by GitHub REST Search.`,
+    `${contributions.period.days} daily activity marks from ${contributions.period.fromDate} through ${contributions.period.toDate}, inclusive.`,
+  ].join(' ');
   const geometry = GEOMETRY[layout];
   const body = layout === 'wide' ? renderWide(view, theme) : renderCompact(view, theme);
   const titleId = `title-${layout}-${colorScheme}`;
