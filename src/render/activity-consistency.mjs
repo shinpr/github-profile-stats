@@ -98,7 +98,7 @@ function renderWide({ snapshot, contributions, tokens }) {
     renderHeader({ snapshot, period: contributions.period, layout: 'wide', tokens }),
     svgText({ x: 28, y: 130, value: contributions.activeDays, fill: tokens.primaryText, size: activeSize, weight: 700, family: SANS_FONT, spacing: -4 }),
     svgText({ x: ratioX, y: 88, value: `/ ${contributions.period.days}`, fill: tokens.mutedText, size: 20, weight: 680, family: SANS_FONT }),
-    svgText({ x: ratioX, y: 118, value: 'ACTIVE DAYS', fill: tokens.primaryText, size: 11, weight: 700 }),
+    svgText({ x: ratioX, y: 118, value: unit(contributions.activeDays, 'ACTIVE DAY', 'ACTIVE DAYS'), fill: tokens.primaryText, size: 11, weight: 700 }),
     line(290, 66, 290, 137, tokens.line),
     svgText({ x: 320, y: 105, value: contributions.currentStreak, fill: tokens.accent, size: 43, weight: 700, family: SANS_FONT }),
     svgText({ x: 320, y: 126, value: `CURRENT STREAK · ${unit(contributions.currentStreak, 'DAY', 'DAYS')}`, fill: tokens.mutedText, size: 8, weight: 650 }),
@@ -134,7 +134,7 @@ function renderCompact({ snapshot, contributions, tokens }) {
     renderHeader({ snapshot, period: contributions.period, layout: 'compact', tokens }),
     svgText({ x: 20, y: 124, value: contributions.activeDays, fill: tokens.primaryText, size: activeSize, weight: 700, family: SANS_FONT, spacing: -3 }),
     svgText({ x: ratioX, y: 91, value: `/ ${contributions.period.days}`, fill: tokens.mutedText, size: 18, weight: 680, family: SANS_FONT }),
-    svgText({ x: ratioX, y: 118, value: 'ACTIVE DAYS', fill: tokens.primaryText, size: 10, weight: 700 }),
+    svgText({ x: ratioX, y: 118, value: unit(contributions.activeDays, 'ACTIVE DAY', 'ACTIVE DAYS'), fill: tokens.primaryText, size: 10, weight: 700 }),
     line(20, 154, 300, 154, tokens.line),
     svgText({ x: 20, y: 202, value: contributions.currentStreak, fill: tokens.accent, size: 42, weight: 700, family: SANS_FONT }),
     svgText({ x: 20, y: 222, value: `CURRENT STREAK · ${unit(contributions.currentStreak, 'DAY', 'DAYS')}`, fill: tokens.mutedText, size: 8, weight: 650 }),
@@ -165,7 +165,7 @@ export function renderActivityConsistency({ snapshot, colorScheme, layout = 'wid
   const body = layout === 'wide'
     ? renderWide({ snapshot, contributions, tokens })
     : renderCompact({ snapshot, contributions, tokens });
-  const description = `${contributions.activeDays} active days out of ${contributions.period.days}; ${contributions.currentStreak}-day current streak; ${contributions.longestStreak}-day longest streak; ${NUMBER_FORMAT.format(contributions.totalContributions)} contributions. Each daily mark represents one UTC day and warmth represents contribution amount.`;
+  const description = `${contributions.activeDays} ${unit(contributions.activeDays, 'active day', 'active days')} out of ${contributions.period.days}; ${contributions.currentStreak}-day current streak; ${contributions.longestStreak}-day longest streak; ${NUMBER_FORMAT.format(contributions.totalContributions)} ${unit(contributions.totalContributions, 'contribution', 'contributions')}. Each daily mark represents one UTC day and warmth represents contribution amount.`;
   return svgFrame({
     layout,
     colorScheme,

@@ -198,3 +198,25 @@ test('should split compact chronology at a Saturday-to-Sunday week boundary', ()
   assert.equal(new Date(`${firstBand.at(-1)}T00:00:00Z`).getUTCDay(), 6);
   assert.equal(new Date(`${secondBand[0]}T00:00:00Z`).getUTCDay(), 0);
 });
+
+test('should read in the singular when one day holds the only contribution', () => {
+  const snapshot = makeSnapshot({ countForIndex: (index) => (index === 364 ? 1 : 0) });
+  for (const layout of ['wide', 'compact']) {
+    const svg = renderActivityConsistency({ snapshot, layout, colorScheme: 'light' });
+
+    assert.match(svg, />ACTIVE DAY<\/text>/);
+    assert.doesNotMatch(svg, />ACTIVE DAYS<\/text>/);
+    assert.match(svg, /<desc [^>]*>1 active day out of 365; 1-day current streak; 1-day longest streak; 1 contribution\. /);
+  }
+});
+
+test('should keep plural wording in the description for counts other than one', () => {
+  const svg = renderActivityConsistency({
+    snapshot: makeSnapshot({ countForIndex: (index) => (index >= 363 ? 1 : 0) }),
+    layout: 'wide',
+    colorScheme: 'light',
+  });
+
+  assert.match(svg, />ACTIVE DAYS<\/text>/);
+  assert.match(svg, /<desc [^>]*>2 active days out of 365; 2-day current streak; 2-day longest streak; 2 contributions\. /);
+});
