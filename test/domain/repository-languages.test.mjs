@@ -50,11 +50,11 @@ test('should form top four plus Other and allocate whole percentages by largest 
     ],
   });
   assert.deepEqual(view, [
-    { name: 'A', bytes: 3, percentage: 23 },
-    { name: 'B', bytes: 3, percentage: 23 },
-    { name: 'C', bytes: 2, percentage: 16 },
-    { name: 'D', bytes: 2, percentage: 15 },
-    { name: 'Other', bytes: 3, percentage: 23 },
+    { name: 'A', bytes: 3, percentageLabel: '23%', exactPercentageLabel: '23.08%' },
+    { name: 'B', bytes: 3, percentageLabel: '23%', exactPercentageLabel: '23.08%' },
+    { name: 'C', bytes: 2, percentageLabel: '16%', exactPercentageLabel: '15.38%' },
+    { name: 'D', bytes: 2, percentageLabel: '15%', exactPercentageLabel: '15.38%' },
+    { name: 'Other', bytes: 3, percentageLabel: '23%', exactPercentageLabel: '23.08%' },
   ]);
 });
 
@@ -62,7 +62,57 @@ test('should display fewer than four languages without an Other group', () => {
   assert.deepEqual(buildLanguageDisplayGroups({
     totalBytes: 4,
     languages: [{ name: 'Go', bytes: 4 }],
-  }), [{ name: 'Go', bytes: 4, percentage: 100 }]);
+  }), [{ name: 'Go', bytes: 4, percentageLabel: '100%', exactPercentageLabel: '100.00%' }]);
+});
+
+test('should label a share that rounds to zero as under one percent', () => {
+  assert.deepEqual(buildLanguageDisplayGroups({
+    totalBytes: 1000,
+    languages: [
+      { name: 'TypeScript', bytes: 500 },
+      { name: 'Go', bytes: 496 },
+      { name: 'Shell', bytes: 4 },
+    ],
+  }), [
+    { name: 'TypeScript', bytes: 500, percentageLabel: '50%', exactPercentageLabel: '50.00%' },
+    { name: 'Go', bytes: 496, percentageLabel: '50%', exactPercentageLabel: '49.60%' },
+    { name: 'Shell', bytes: 4, percentageLabel: '<1%', exactPercentageLabel: '0.40%' },
+  ]);
+});
+
+test('should label a share that rounds to all beside another language as over ninety-nine percent', () => {
+  assert.deepEqual(buildLanguageDisplayGroups({
+    totalBytes: 1000,
+    languages: [
+      { name: 'TypeScript', bytes: 997 },
+      { name: 'Shell', bytes: 3 },
+    ],
+  }), [
+    { name: 'TypeScript', bytes: 997, percentageLabel: '>99%', exactPercentageLabel: '99.70%' },
+    { name: 'Shell', bytes: 3, percentageLabel: '<1%', exactPercentageLabel: '0.30%' },
+  ]);
+});
+
+test('should round exact shares half up to two decimals without reading 0.00% or 100.00%', () => {
+  assert.deepEqual(buildLanguageDisplayGroups({
+    totalBytes: 1000000,
+    languages: [
+      { name: 'TypeScript', bytes: 999945 },
+      { name: 'Go', bytes: 50 },
+      { name: 'Shell', bytes: 5 },
+    ],
+  }).map(({ name, exactPercentageLabel }) => ({ name, exactPercentageLabel })), [
+    { name: 'TypeScript', exactPercentageLabel: '99.99%' },
+    { name: 'Go', exactPercentageLabel: '0.01%' },
+    { name: 'Shell', exactPercentageLabel: '<0.01%' },
+  ]);
+  assert.deepEqual(buildLanguageDisplayGroups({
+    totalBytes: 1000000,
+    languages: [
+      { name: 'TypeScript', bytes: 999950 },
+      { name: 'Shell', bytes: 50 },
+    ],
+  }).map(({ exactPercentageLabel }) => exactPercentageLabel), ['>99.99%', '0.01%']);
 });
 
 test('should reject display groups whose bytes do not equal the declared total', () => {

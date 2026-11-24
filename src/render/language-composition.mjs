@@ -32,15 +32,17 @@ function renderRows({ groups, tokens, x, width, startY, gap, barHeight, labelSiz
       svgText({
         x: x + width,
         y,
-        value: `${group.percentage}%`,
+        value: group.percentageLabel,
         fill: tokens.primaryText,
         size: labelSize + 2,
         weight: 700,
         family: SANS_FONT,
         anchor: 'end',
       }),
+      `<g><title>${escapeXml(`${group.name} ${group.exactPercentageLabel}`)}</title>`,
       `<rect x="${x}" y="${y + 10}" width="${width}" height="${barHeight}" fill="${tokens.line}"/>`,
       `<rect data-row-rank="${index + 1}" x="${x}" y="${y + 10}" width="${width * group.bytes / groups.reduce((sum, item) => sum + item.bytes, 0)}" height="${barHeight}" fill="${tokens.ranks[index]}"/>`,
+      '</g>',
     ].join('');
   }).join('');
 }
@@ -95,7 +97,7 @@ export function renderLanguageComposition({ snapshot, colorScheme, layout = 'wid
   const count = dataset.repositoryScope.includedRepositoryCount;
   const description = groups.length === 0
     ? `No GitHub-reported language bytes across ${count} owned public non-fork repositories as of ${snapshot.asOfDate}.`
-    : `GitHub-reported language bytes across ${count} owned public non-fork repositories as of ${snapshot.asOfDate}: ${groups.map((group) => `${group.name} ${group.percentage}%`).join(', ')}.`;
+    : `GitHub-reported language bytes across ${count} owned public non-fork repositories as of ${snapshot.asOfDate}: ${groups.map((group) => `${group.name} ${group.percentageLabel}`).join(', ')}.`;
   const body = groups.length === 0
     ? renderEmpty({ snapshot, dataset, tokens, layout })
     : renderComplete({ snapshot, dataset, groups, tokens, layout });

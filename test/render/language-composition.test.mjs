@@ -95,3 +95,38 @@ test('should retain full long names in the description while visibly truncating 
   assert.match(svg, new RegExp(`<desc[^>]*>[^<]*${fullName} 100%`));
   assert.match(svg, />AQuiteUnusuallyLong…<\/text>/);
 });
+
+test('should word edge shares as <1% and >99% on the card and in its description', () => {
+  const svg = renderLanguageComposition({
+    snapshot: makeSnapshot([
+      { name: 'TypeScript', bytes: 997 },
+      { name: 'Shell', bytes: 3 },
+    ]),
+    layout: 'wide',
+    colorScheme: 'light',
+  });
+  assert.match(svg, />TypeScript<\/text>.*>&gt;99%<\/text>.*>Shell<\/text>.*>&lt;1%<\/text>/s);
+  assert.match(svg, /<desc[^>]*>[^<]*TypeScript &gt;99%, Shell &lt;1%\./);
+  assert.doesNotMatch(svg, />(0|100)%<\/text>/);
+  validateSvg({ svg, layout: 'wide' });
+  validateLanguageCompositionSvg({ svg, colorScheme: 'light' });
+});
+
+test('should give each row bar a hover title with its exact percentage', () => {
+  const svg = renderLanguageComposition({
+    snapshot: makeSnapshot([
+      { name: 'TypeScript', bytes: 997 },
+      { name: 'C<+>', bytes: 3 },
+    ]),
+    layout: 'compact',
+    colorScheme: 'dark',
+  });
+  const barTitles = [...svg.matchAll(/<g><title>([^<]+)<\/title><rect[^>]*\/><rect data-row-rank="(\d)"[^>]*\/><\/g>/g)]
+    .map(([, title, rank]) => ({ rank, title }));
+  assert.deepEqual(barTitles, [
+    { rank: '1', title: 'TypeScript 99.70%' },
+    { rank: '2', title: 'C&lt;+&gt; 0.30%' },
+  ]);
+  validateSvg({ svg, layout: 'compact' });
+  validateLanguageCompositionSvg({ svg, colorScheme: 'dark' });
+});
