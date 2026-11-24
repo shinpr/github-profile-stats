@@ -47,17 +47,15 @@ function renderRows({ groups, tokens, x, width, startY, gap, barHeight, labelSiz
   }).join('');
 }
 
-function renderComplete({ snapshot, dataset, groups, tokens, layout }) {
-  const count = dataset.repositoryScope.includedRepositoryCount;
+function renderComplete({ snapshot, scopeLabel, groups, tokens, layout }) {
   const identity = `${snapshot.account.login} · AS OF ${snapshot.asOfDate}`;
-  const scope = `GITHUB-REPORTED BYTES · ${count} OWNED PUBLIC NON-FORK REPOS`;
   if (layout === 'compact') {
     return [
       svgText({ x: 20, y: 29, value: identity, fill: tokens.mutedText, size: 9, weight: 600, spacing: 0.5 }),
       renderRail({ groups, tokens, x: 20, y: 52, width: 280, height: 16 }),
       svgText({ x: 20, y: 118, value: 'LANGUAGE', fill: tokens.primaryText, size: 40, weight: 700, family: SANS_FONT, spacing: -1.2 }),
       svgText({ x: 20, y: 157, value: 'COMPOSITION', fill: tokens.primaryText, size: 40, weight: 700, family: SANS_FONT, spacing: -1.2 }),
-      svgText({ x: 20, y: 181, value: scope, fill: tokens.mutedText, size: 7, weight: 600, spacing: 0.15 }),
+      svgText({ x: 20, y: 181, value: scopeLabel, fill: tokens.mutedText, size: 7, weight: 600, spacing: 0.15 }),
       renderRows({ groups, tokens, x: 20, width: 280, startY: 220, gap: 56, barHeight: 10, labelSize: 16, maxCharacters: 23 }),
     ].join('');
   }
@@ -67,13 +65,11 @@ function renderComplete({ snapshot, dataset, groups, tokens, layout }) {
     svgText({ x: 28, y: 127, value: 'LANGUAGE', fill: tokens.primaryText, size: 42, weight: 700, family: SANS_FONT, spacing: -1.3 }),
     svgText({ x: 28, y: 168, value: 'COMPOSITION', fill: tokens.primaryText, size: 42, weight: 700, family: SANS_FONT, spacing: -1.3 }),
     renderRows({ groups, tokens, x: 350, width: 262, startY: 106, gap: 45, barHeight: 8, labelSize: 16, maxCharacters: 19 }),
-    svgText({ x: 28, y: 333, value: scope, fill: tokens.mutedText, size: 9, weight: 600, spacing: 0.3 }),
+    svgText({ x: 28, y: 333, value: scopeLabel, fill: tokens.mutedText, size: 9, weight: 600, spacing: 0.3 }),
   ].join('');
 }
 
-function renderEmpty({ snapshot, dataset, tokens, layout }) {
-  const count = dataset.repositoryScope.includedRepositoryCount;
-  const scope = `GITHUB-REPORTED BYTES · ${count} OWNED PUBLIC NON-FORK REPOS`;
+function renderEmpty({ snapshot, scopeLabel, tokens, layout }) {
   const x = layout === 'wide' ? 28 : 20;
   return [
     svgText({ x, y: layout === 'wide' ? 31 : 29, value: `${snapshot.account.login} · AS OF ${snapshot.asOfDate}`, fill: tokens.mutedText, size: layout === 'wide' ? 10 : 9, weight: 600, spacing: 0.5 }),
@@ -81,7 +77,7 @@ function renderEmpty({ snapshot, dataset, tokens, layout }) {
     svgText({ x, y: layout === 'wide' ? 153 : 151, value: 'COMPOSITION', fill: tokens.primaryText, size: layout === 'wide' ? 42 : 40, weight: 700, family: SANS_FONT, spacing: -1.2 }),
     `<line x1="${x}" y1="${layout === 'wide' ? 202 : 222}" x2="${layout === 'wide' ? 612 : 300}" y2="${layout === 'wide' ? 202 : 222}" stroke="${tokens.line}"/>`,
     svgText({ x, y: layout === 'wide' ? 248 : 278, value: 'NO GITHUB-REPORTED LANGUAGE BYTES', fill: tokens.primaryText, size: layout === 'wide' ? 18 : 14, weight: 650, family: SANS_FONT }),
-    svgText({ x, y: layout === 'wide' ? 333 : 500, value: scope, fill: tokens.mutedText, size: layout === 'wide' ? 9 : 7, weight: 600, spacing: 0.2 }),
+    svgText({ x, y: layout === 'wide' ? 333 : 500, value: scopeLabel, fill: tokens.mutedText, size: layout === 'wide' ? 9 : 7, weight: 600, spacing: 0.2 }),
   ].join('');
 }
 
@@ -95,12 +91,15 @@ export function renderLanguageComposition({ snapshot, colorScheme, layout = 'wid
   }
   const groups = buildLanguageDisplayGroups(dataset);
   const count = dataset.repositoryScope.includedRepositoryCount;
+  const isSingleRepository = count === 1;
+  const scopeLabel = `GITHUB-REPORTED BYTES · ${count} OWNED PUBLIC NON-FORK ${isSingleRepository ? 'REPO' : 'REPOS'}`;
+  const scopeDescription = `${count} owned public non-fork ${isSingleRepository ? 'repository' : 'repositories'}`;
   const description = groups.length === 0
-    ? `No GitHub-reported language bytes across ${count} owned public non-fork repositories as of ${snapshot.asOfDate}.`
-    : `GitHub-reported language bytes across ${count} owned public non-fork repositories as of ${snapshot.asOfDate}: ${groups.map((group) => `${group.name} ${group.percentageLabel}`).join(', ')}.`;
+    ? `No GitHub-reported language bytes across ${scopeDescription} as of ${snapshot.asOfDate}.`
+    : `GitHub-reported language bytes across ${scopeDescription} as of ${snapshot.asOfDate}: ${groups.map((group) => `${group.name} ${group.percentageLabel}`).join(', ')}.`;
   const body = groups.length === 0
-    ? renderEmpty({ snapshot, dataset, tokens, layout })
-    : renderComplete({ snapshot, dataset, groups, tokens, layout });
+    ? renderEmpty({ snapshot, scopeLabel, tokens, layout })
+    : renderComplete({ snapshot, scopeLabel, groups, tokens, layout });
   return svgFrame({
     layout,
     colorScheme,

@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { normalizeMetricSnapshot } from '../../src/domain/snapshot.mjs';
 import { normalizeRepositoryLanguagesDataset } from '../../src/domain/repository-languages.mjs';
+import { COLOR_SCHEMES, LAYOUTS } from '../../src/registry/visual-formats.mjs';
 import { renderLanguageComposition } from '../../src/render/language-composition.mjs';
 import { validateLanguageCompositionSvg, validateSvg } from '../../src/render/validate-svg.mjs';
 
@@ -84,6 +85,26 @@ test('should render the valid empty state without rail, rows, or percentages', (
   assert.doesNotMatch(svg, /data-rail-rank|data-row-rank|%<\/text>/);
   validateLanguageCompositionSvg({ svg, colorScheme: 'light' });
 });
+
+for (const { byteState, languageEntries } of [
+  { byteState: 'with language bytes', languageEntries: [{ name: 'Go', bytes: 1 }] },
+  { byteState: 'without language bytes', languageEntries: [] },
+]) {
+  for (const layout of LAYOUTS) {
+    for (const colorScheme of COLOR_SCHEMES) {
+      test(`should describe one repository in the singular for ${layout} ${colorScheme} ${byteState}`, () => {
+        const svg = renderLanguageComposition({
+          snapshot: makeSnapshot(languageEntries, 1),
+          layout,
+          colorScheme,
+        });
+
+        assert.match(svg, />GITHUB-REPORTED BYTES · 1 OWNED PUBLIC NON-FORK REPO<\/text>/);
+        assert.match(svg, /<desc[^>]*>[^<]*across 1 owned public non-fork repository as of /);
+      });
+    }
+  }
+}
 
 test('should retain full long names in the description while visibly truncating the row', () => {
   const fullName = 'AQuiteUnusuallyLongProgrammingLanguageName';
