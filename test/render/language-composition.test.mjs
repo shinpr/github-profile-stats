@@ -39,6 +39,7 @@ test('should render a composition rail and rank-matched labelled rows', () => {
   assert.match(svg, />TypeScript<\/text>.*>42%<\/text>/s);
   assert.match(svg, />Other<\/text>.*>8%<\/text>/s);
   assert.match(svg, />GITHUB-REPORTED BYTES · 27 OWNED PUBLIC NON-FORK REPOS<\/text>/);
+  assert.match(svg, /<desc[^>]*>GitHub-reported language bytes across 27 owned public non-fork repositories as of /);
   assert.match(svg, />shinpr · AS OF 2026-07-22<\/text>/);
   for (let rank = 1; rank <= 5; rank += 1) {
     const railColor = svg.match(new RegExp(`data-rail-rank="${rank}"[^>]+fill="([^"]+)"`))?.[1];
@@ -68,6 +69,8 @@ test('should use a readable two-line title and preserve exact language casing in
   assert.match(svg, />LANGUAGE<\/text>.*>COMPOSITION<\/text>/s);
   assert.match(svg, />Objective-C\+\+<\/text>/);
   assert.match(svg, />100%<\/text>/);
+  assert.match(svg, />GITHUB-REPORTED BYTES · 1 OWNED PUBLIC NON-FORK REPO<\/text>/);
+  assert.match(svg, /<desc[^>]*>GitHub-reported language bytes across 1 owned public non-fork repository as of 2026-07-22: Objective-C\+\+ 100%\.<\/desc>/);
   assert.doesNotMatch(svg, />OBJECTIVE-C/);
   validateSvg({ svg, layout: 'compact' });
   validateLanguageCompositionSvg({ svg, colorScheme: 'dark' });
@@ -81,8 +84,19 @@ test('should render the valid empty state without rail, rows, or percentages', (
   });
   assert.match(svg, />NO GITHUB-REPORTED LANGUAGE BYTES<\/text>/);
   assert.match(svg, />GITHUB-REPORTED BYTES · 8 OWNED PUBLIC NON-FORK REPOS<\/text>/);
+  assert.match(svg, /<desc[^>]*>No GitHub-reported language bytes across 8 owned public non-fork repositories as of 2026-07-22\.<\/desc>/);
   assert.doesNotMatch(svg, /data-rail-rank|data-row-rank|%<\/text>/);
   validateLanguageCompositionSvg({ svg, colorScheme: 'light' });
+});
+
+test('should use singular repository wording when one repository reports no language bytes', () => {
+  const svg = renderLanguageComposition({
+    snapshot: makeSnapshot([], 1),
+    layout: 'wide',
+    colorScheme: 'light',
+  });
+  assert.match(svg, />GITHUB-REPORTED BYTES · 1 OWNED PUBLIC NON-FORK REPO<\/text>/);
+  assert.match(svg, /<desc[^>]*>No GitHub-reported language bytes across 1 owned public non-fork repository as of 2026-07-22\.<\/desc>/);
 });
 
 test('should retain full long names in the description while visibly truncating the row', () => {
