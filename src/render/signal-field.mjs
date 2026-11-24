@@ -1,5 +1,5 @@
 import { COLOR_SCHEME_TOKENS } from './tokens.mjs';
-import { svgSequentialLegend } from './card-primitives.mjs';
+import { svgSequentialLegend, unit } from './card-primitives.mjs';
 import { positionCalendarDays, splitCalendarBands } from './calendar-grid.mjs';
 
 const SANS_FONT = 'ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';
@@ -46,7 +46,7 @@ function formatCompactLogin(login) {
 }
 
 function formatCount(value, singular, plural) {
-  return `${NUMBER_FORMAT.format(value)} ${value === 1 ? singular : plural}`;
+  return `${NUMBER_FORMAT.format(value)} ${unit(value, singular, plural)}`;
 }
 
 function text({ x, y, value, fill, size, weight = 500, family = MONO_FONT, anchor }) {

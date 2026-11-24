@@ -5,6 +5,7 @@ import {
   svgFrame,
   svgSequentialLegend,
   svgText,
+  unit,
 } from './card-primitives.mjs';
 import {
   positionCalendarDays,
@@ -76,10 +77,6 @@ function renderDailyField({
   const bandCount = bands.length;
   const bottom = y + bandCount * bandHeight + (bandCount - 1) * bandGap;
   return { svg, bottom };
-}
-
-function unit(value, singular, plural) {
-  return value === 1 ? singular : plural;
 }
 
 function renderWide({ snapshot, contributions, tokens }) {
