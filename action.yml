@@ -8,7 +8,7 @@ inputs:
     description: Workflow-provided github.token.
     required: true
   profile:
-    description: Registered visual profile and its required metrics.
+    description: "Profile to generate: signal-field, activity-consistency, or language-composition. Defaults to signal-field."
     required: false
     default: signal-field
 outputs:
